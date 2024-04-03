@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(cpp_project_template)
+project(cxx-reflection)
 
 set(CMAKE_CXX_STANDARD 23)
 

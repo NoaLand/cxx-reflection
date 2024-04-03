@@ -1,5 +1,5 @@
 add_executable(
-        cpp_project_template
+        cxx_reflection
         main.cpp
 )
-target_link_libraries(cpp_project_template PRIVATE cpp_project_template_lib)
+target_link_libraries(cxx_reflection PRIVATE cxx_reflection_lib)
