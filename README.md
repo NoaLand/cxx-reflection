@@ -23,8 +23,8 @@ public:
 };
 
 // register them into the reflection system
-refl::register<Foo> foo{refl::field<int>("i"), refl::field<double>("d")};
-refl::register<Bar> bar{refl::field<Foo>("foo"), refl::field<std::string>("str")};
+refl::type<Foo> foo{refl::field<int>("i"), refl::field<double>("d")};
+refl::type<Bar> bar{refl::field<Foo>("foo"), refl::field<std::string>("str")};
 
 // use them in function
 int main() {
@@ -35,14 +35,14 @@ int main() {
     
     // should use type of field as type of variable,
     // create a new variable named "str2" with type std::string
-    refl::type_of_field<bar>("str") str2{"world"};
+    refl::get_field<bar>("str") str2{"world"};
     
     // create a new variable named "foo" with type Foo
-    refl::type_of_field<bar>("foo") foo{2, 7.99};
+    refl::get_field<bar>("foo") foo{2, 7.99};
     
     // should print field name and value
-    refl::for_each_field(bar, [](const auto& field) {
-    std::cout << field.name() << ": " << field.get() << std::endl;
+    refl::for_each_field<bar>([](const auto& field) {
+        std::cout << field.name() << ": " << field.get() << std::endl;
     });
 
     return 0;
