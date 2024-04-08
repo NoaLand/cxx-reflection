@@ -11,7 +11,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(
         cxx_reflection_tests
         test_main.cpp
-        test_template.cpp
+        reflection_tests.cpp
 )
 
 target_link_libraries(
