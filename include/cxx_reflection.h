@@ -36,7 +36,7 @@ namespace refl {
             (fields.emplace_back(std::unique_ptr<field_base>(field.template operator()<T>())), ...);
         }
 
-        //    private:
+    // private:
         std::vector<std::unique_ptr<field_base>> fields;
     };
 }
