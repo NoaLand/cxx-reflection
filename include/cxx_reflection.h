@@ -7,25 +7,23 @@
 #include <vector>
 
 namespace refl {
-//    namespace {
-        struct field_base {
-            virtual std::string get_name() = 0;
-            virtual size_t get_offset() = 0;
-            virtual ~field_base() = default;
-        };
+    struct field_base {
+        virtual std::string get_name() = 0;
+        virtual size_t get_offset() = 0;
+        virtual ~field_base() = default;
+    };
 
-        template<typename FT>
-        class _field : public field_base {
-        public:
-            _field(std::string name, const size_t& offset) : name{std::move(name)}, offset{offset} {}
-            std::string get_name() override { return name; }
-            size_t get_offset() override { return offset; }
-        private:
-            std::string name;
-            size_t offset;
-            using type = FT;
-        };
-//    }
+    template<typename FT>
+    class _field : public field_base {
+    public:
+        _field(std::string name, const size_t& offset) : name{std::move(name)}, offset{offset} {}
+        std::string get_name() override { return name; }
+        size_t get_offset() override { return offset; }
+    private:
+        std::string name;
+        size_t offset;
+        using type = FT;
+    };
 
     template<typename T>
     class type {
