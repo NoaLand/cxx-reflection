@@ -19,7 +19,7 @@ public:
 refl::type<Foo> foo{refl_field(i), refl_field(d)};
 refl::type<Bar> bar{refl_field(foo), refl_field(str)};
 
-TEST(test_template, test_should_pass_when_1_is_equal_to_1) {
+TEST(test_refl, should_successfully_store_field_info) {
     ASSERT_EQ(foo.fields.size(), 2);
     ASSERT_EQ(foo.fields[0]->get_name(), "i");
     ASSERT_EQ(foo.fields[1]->get_name(), "d");
