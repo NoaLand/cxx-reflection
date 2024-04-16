@@ -34,6 +34,17 @@ namespace refl {
             (fields.emplace_back(std::unique_ptr<field_base>(field.template operator()<T>())), ...);
         }
 
+        // TODO: should be changed later according
+        template<typename FT>
+        void set_field_value(T& instance, const std::string& field_name, FT&& value) {
+            for (const auto& f : fields) {
+                if (f->get_name() == field_name) {
+                    *reinterpret_cast<FT*>(reinterpret_cast<char*>(&instance) + f->get_offset()) = value;
+                    return;
+                }
+            }
+        }
+
     // private:
         std::vector<std::unique_ptr<field_base>> fields;
     };
