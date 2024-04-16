@@ -4,7 +4,7 @@ This is a C++ reflection library that is designed to be easy to use and is writt
 
 And I'm trying to make it as simple as possible, so that user can use it without changing their implementation code.
 
-BTW, in this library, I'll use template instead of macro.
+BTW, in this library, instead of using macro, this lib will prefer to use template to do as many reflection features as possible.
 
 ## Syntax
 
@@ -23,6 +23,7 @@ public:
 };
 
 // register them into the reflection system
+// TBD, maybe change later
 refl::type<Foo> foo{refl::field<int>("i"), refl::field<double>("d")};
 refl::type<Bar> bar{refl::field<Foo>("foo"), refl::field<std::string>("str")};
 
