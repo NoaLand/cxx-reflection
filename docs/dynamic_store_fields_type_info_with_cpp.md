@@ -44,7 +44,8 @@ Using `std::any` to store information has its drawbacks. It is evident that when
 
 ### 3.2 [Failed] Solution II: Template Class + Inheritance
 
-⚠️ Note: This article does not discuss the calculation of offsets. Content related to offsets will be addressed in a separate article.
+> [!NOTE]
+> This article does not discuss the calculation of offsets. Content related to offsets will be addressed in a separate article.
 
 To store different types in the same container, the use of inheritance seems to be a suitable approach. For this purpose, I conducted the following experiment:
 
@@ -114,7 +115,8 @@ Therefore, this solution is not an ideal one, and due to certain factors, it is 
 
 ### 3.4 [Successful] Solution IV: constexpr + std::variant + Variadic Template Class (Used in Reflection Library)
 
-⚠️ This solution is also used in this codebase.
+> [!NOTE]
+> This solution is also used in this codebase.
 
 In this solution, several corresponding measures are taken to address the constraints mentioned earlier:
 1. For Constraint 1:
@@ -125,7 +127,8 @@ In this solution, several corresponding measures are taken to address the constr
     2. Construct the template function `template<std::size_t index> consteval auto get_type_info()` to leverage the compile-time computation capability of `consteval`, the dynamic determination of return types using `auto`, and the conditional compilation ability of `if constexpr`. This implementation makes the `get_type` function "appear" as if it returns dynamic types.
 3. For Constraint 3, since the type information in the reflection library is registered first and then used, we can ascertain that the fields in the class are known. Thus, we can use `std::variant` combined with a variadic template class to construct a `std::variant` that holds all the type information existing in a class.
 
-⚠️ Note: Additionally, considerations should be given to scenarios without default constructors and memory efficiency. Therefore, the structure for storing type information should not store instances but only types.
+> [!IMPORTANT]
+> Note: Additionally, considerations should be given to scenarios without default constructors and memory efficiency. Therefore, the structure for storing type information should not store instances but only types.
 
 To achieve this, I made the first version attempt, which successfully stores custom type information. However, due to the use of `*static_cast<T>(nullptr)`, it produces errors for primitive data types. This issue is completely resolved in the second version:
 
@@ -304,7 +307,8 @@ TEST(refl_test, should_get_type_info_after_register) {
 
 ### 3.2 [失败] 方案二：模板类 + 继承
 
-⚠️注意：本文不讨论 offset 的计算，有关 offset 相关内容会另外单独写一篇文章。
+> [!NOTE]
+> 本文不讨论 offset 的计算，有关 offset 相关内容会另外单独写一篇文章。
 
 为了在同一容器中存放不同的类型，这一需求显然使用继承可以完全符合，为此我进行了下列实验：
 
@@ -374,7 +378,8 @@ TEST(refl_test, should_get_type_info_after_register) {
 
 ### 3.4 [成功] 方案四：constexpr + std::variant + 可变参数模板类（集成到反射库时需要用到）
 
-⚠️该方案也是本代码库使用的方案。
+> [!NOTE]
+> 该方案也是本代码库使用的方案。
 
 本方案中，为了解决前面提到的几个约束，分别做了对应的应对措施：
 1. 对于约束1：
@@ -385,7 +390,8 @@ TEST(refl_test, should_get_type_info_after_register) {
    2. 构造模板函数 `template<std::size_t index> consteval auto get_type_info()`，借助 `consteval` 的编译时计算能力，以及 `auto` 可动态决定返回类型，以及 `if constexpr` 能力，将 `get_type` 函数实现为“看起来”返回动态类型的函数；
 3. 对于约束3，由于反射库中的类型信息会先注册，再使用，因此我们可以确认类中的字段一定是已知的，“字段数量”，“字段类型”，“字段名称”等，由此可以使用 `std::variant` 结合 可变参数模板类构造 `std::variant` 用于存放一个类中存在的所有类型信息；
 
-⚠️注意：另外还需要考虑无默认构造函数与内存效率的情况，因此对于类型信息保存的结构体，不能保存成实例，而只应保存类型。
+> [!IMPORTANT]
+> 另外还需要考虑无默认构造函数与内存效率的情况，因此对于类型信息保存的结构体，不能保存成实例，而只应保存类型。
 
 为此，我做了第一个版本的尝试，该版本能成功保存自定义类型信息，但由于使用了 `*static_cast<T>(nullptr)`，因此对于基本数据类型会出现报错，这一问题在第二版中完全解决：
 
