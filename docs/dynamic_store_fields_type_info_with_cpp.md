@@ -148,7 +148,7 @@ struct Foo {
     Foo() = delete;
 };
 
-// 外层调用时，无法处理 int 这种基本数据类型，因为在解引用时会遇到问题。而且最好封装一下
+// 外层调用时，无法处理 int 这种基本数据类型，因为在解引用时会遇到问题。
 template<std::size_t index>
 consteval auto get_type(const std::variant<int, std::string, Foo>& my_variant) {
     if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, int>) {
@@ -195,18 +195,22 @@ struct Foo {
 };
 
 // v2
+// type_placeholder 用于保存字段类型信息
 template<typename T>
 struct type_placeholder {
     using type = T;
 };
 
+// 用于创建 type_placeholder 实例
 template<typename T>
 consteval type_placeholder<T> create_tp() {
     return {};
 }
 
+// 为了简化代码在此设置全部字段类型的别名 field_types
 using field_types = std::variant<type_placeholder<int>, type_placeholder<std::string>, type_placeholder<Foo>, type_placeholder<int*>>;
 
+// 在此获取字段类型的指针，避免解引用的问题，另外，这里使用了 consteval，因此可以在编译时计算，在实际使用中，可以使用可变参数展开实现 `if constexpr` 的能力
 template<std::size_t index>
 consteval auto get_type(const field_types& my_variant) {
     if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int>>) {
@@ -227,15 +231,15 @@ consteval auto get_type(const field_types& my_variant) {
 }
 
 TEST(refl_test, should_get_type_info_after_register) {
+    // 注册四个字段，分别为 int i, Foo foo, std::string s, int* Pi
     constexpr std::array<std::pair<std::string_view, field_types>, 4> x {{
-         {std::string_view{"i"}, create_tp<int>()},
-         {std::string_view{"foo"}, create_tp<Foo>()},
-         {std::string_view{"s"}, create_tp<std::string>()},
-         {std::string_view{"Pi"}, create_tp<int*>()},
-     }};
-
-
-    // 类型信息打印
+        {std::string_view{"i"}, create_tp<int>()},
+        {std::string_view{"foo"}, create_tp<Foo>()},
+        {std::string_view{"s"}, create_tp<std::string>()},
+        {std::string_view{"Pi"}, create_tp<int*>()},
+    }};
+    
+    // 类型信息持有判断，接下来判断是否能够从 array 中恢复每个字段的类型信息，并使用 std::is_same_v 判断是否正确
     constexpr field_types i = x[0].second;
     ASSERT_TRUE((std::is_same_v<std::remove_pointer<decltype(get_type<i.index()>(i))>::type, int>));
 
