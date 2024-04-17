@@ -1,3 +1,5 @@
+[TOC]
+
 # [EN] Dynamic Store Fields Type Info with C++
 
 ## 1. Introduction
