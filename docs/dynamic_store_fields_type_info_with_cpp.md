@@ -208,21 +208,25 @@ using field_types = std::variant<type_placeholder<int>, type_placeholder<std::st
 // Get pointers to the reflected_field types here to avoid dereferencing issues. Additionally, consteval is used here, which allows for compile-time computation. In practical usage, variadic template expansion can be used to implement the ability of if constexpr.
 template<std::size_t index>
 consteval auto get_type(const field_types& my_variant) {
-    if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int>>) {
-        return static_cast<int*>(nullptr);
-    }
+    // step 1 we can find there's a pattern as follows:
+    // if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int>>) {
+    //     return static_cast<int*>(nullptr);
+    // }
 
-    if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int*>>) {
-        return static_cast<int**>(nullptr);
-    }
+    // if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int*>>) {
+    //     return static_cast<int**>(nullptr);
+    // }
 
-    if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<std::string>>) {
-        return static_cast<std::string*>(nullptr);
-    }
+    // if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<std::string>>) {
+    //     return static_cast<std::string*>(nullptr);
+    // }
 
-    if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<Foo>>) {
-        return static_cast<Foo*>(nullptr);
-    }
+    // if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<Foo>>) {
+    //     return static_cast<Foo*>(nullptr);
+    // }
+    
+    // step 2 in the end we can just simplify the code as follows:
+    return static_cast<typename std::decay_t<decltype(std::get<index>(my_variant))>::type*>(nullptr);
 }
 
 TEST(refl_test, should_get_type_info_after_register) {
@@ -471,21 +475,25 @@ using field_types = std::variant<type_placeholder<int>, type_placeholder<std::st
 // 在此获取字段类型的指针，避免解引用的问题，另外，这里使用了 consteval，因此可以在编译时计算，在实际使用中，可以使用可变参数展开实现 `if constexpr` 的能力
 template<std::size_t index>
 consteval auto get_type(const field_types& my_variant) {
-    if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int>>) {
-        return static_cast<int*>(nullptr);
-    }
+    // step 1 整理出统一的规律如下:
+    // if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int>>) {
+    //     return static_cast<int*>(nullptr);
+    // }
 
-    if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int*>>) {
-        return static_cast<int**>(nullptr);
-    }
+    // if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int*>>) {
+    //     return static_cast<int**>(nullptr);
+    // }
 
-    if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<std::string>>) {
-        return static_cast<std::string*>(nullptr);
-    }
+    // if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<std::string>>) {
+    //     return static_cast<std::string*>(nullptr);
+    // }
 
-    if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<Foo>>) {
-        return static_cast<Foo*>(nullptr);
-    }
+    // if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<Foo>>) {
+    //     return static_cast<Foo*>(nullptr);
+    // }
+    
+    // step 2 最后我们可以将上面的代码简化成如下:
+    return static_cast<typename std::decay_t<decltype(std::get<index>(my_variant))>::type*>(nullptr);
 }
 
 TEST(refl_test, should_get_type_info_after_register) {
