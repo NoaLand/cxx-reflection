@@ -66,11 +66,11 @@ template<typename T>
 struct reflected_field : meta_field {
     reflected_field(const std::string& name) : name(name) {}
     
-    virtual const std::string get_name() override {
+    const std::string get_name() override {
         return name;
     }
 
-    virtual std::string get_type_info() override {
+    std::string get_type_info() override {
         return typeid(T).name();
     }
     
@@ -329,11 +329,11 @@ template<typename T>
 struct reflected_field : meta_field {
     reflected_field(const std::string& name) : name(name) {}
     
-    virtual const std::string get_name() override {
+    const std::string get_name() override {
         return name;
     }
 
-    virtual std::string get_type_info() override {
+    std::string get_type_info() override {
         return typeid(T).name();
     }
     
