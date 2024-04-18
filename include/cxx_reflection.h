@@ -23,7 +23,6 @@ namespace refl {
     private:
         std::string name;
         size_t offset;
-        using type = FT;
     };
 
     template<typename T, typename... FIELDS_TYPES>
