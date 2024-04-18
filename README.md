@@ -24,26 +24,26 @@ public:
 
 // register them into the reflection system
 // TBD, maybe change later
-refl::type<Foo> foo{refl::field<int>("i"), refl::field<double>("d")};
-refl::type<Bar> bar{refl::field<Foo>("foo"), refl::field<std::string>("str")};
+refl::type<Foo> foo{refl::reflected_field<int>("i"), refl::reflected_field<double>("d")};
+refl::type<Bar> bar{refl::reflected_field<Foo>("foo"), refl::reflected_field<std::string>("str")};
 
 // use them in function
 int main() {
     Bar bar{{1, 3.14}, "hello"};
     
-    // should get field value by name
+    // should get reflected_field value by name
     auto str1 = refl::get_field<bar>("str");
     
-    // should use type of field as type of variable,
+    // should use type of reflected_field as type of variable,
     // create a new variable named "str2" with type std::string
     refl::get_field<bar>("str") str2{"world"};
     
     // create a new variable named "foo" with type Foo
     refl::get_field<bar>("foo") foo{2, 7.99};
     
-    // should print field name and value
-    refl::for_each_field<bar>([](const auto& field) {
-        std::cout << field.name() << ": " << field.get() << std::endl;
+    // should print reflected_field name and value
+    refl::for_each_field<bar>([](const auto& reflected_field) {
+        std::cout << reflected_field.name() << ": " << reflected_field.get() << std::endl;
     });
 
     return 0;

@@ -4,9 +4,9 @@
 
 One important problem that a C++ reflection library aims to address is how to "dynamically" retrieve type information from registered reflected types.
 
-Since C++ itself is a statically-typed system, we need a mechanism to generate all the relevant information related to fields during compile-time, such as "field name," "offset relative to its enclosing type," and "field type information."
+Since C++ itself is a statically-typed system, we need a mechanism to generate all the relevant information related to fields during compile-time, such as "reflected_field name," "offset relative to its enclosing type," and "reflected_field type information."
 
-Note: The term "field type information" refers to the type information of the field, not its value. For example, for a field `int a`, its type information is `int`, not `18`. In other words, in the subsequent implementation, we expect to create a variable of the same type as `int` using this information, as shown below:
+Note: The term "reflected_field type information" refers to the type information of the reflected_field, not its value. For example, for a reflected_field `int a`, its type information is `int`, not `18`. In other words, in the subsequent implementation, we expect to create a variable of the same type as `int` using this information, as shown below:
 
 ```cpp
 // pseudocode
@@ -14,7 +14,7 @@ struct Foo {
     int a;
 };
 
-refl(type(Foo), field(a)) refl_foo;
+refl(type(Foo), reflected_field(a)) refl_foo;
 
 TEST(refl_test, should_get_type_info_after_register) {
     refl_foo.get_type("a")::type x = 10;
@@ -28,10 +28,10 @@ TEST(refl_test, should_get_type_info_after_register) {
 In a reflection library, potential use cases may include:
 - When implementing an "auto fixture" testing framework (a framework used for quickly creating test data), the ability to retrieve the type information of fields based on their names is required. This information is then used to generate a value of the same type and assign it to the generated instance.
 - When implementing serialization/deserialization, the ability to retrieve the type information of fields based on their names is necessary. This information is then used to generate a value of the same type and assign it to the generated instance.
-- When implementing assignment validation in a reflection library, it is necessary to determine whether the type of field matches and if it is assignable.
+- When implementing assignment validation in a reflection library, it is necessary to determine whether the type of reflected_field matches and if it is assignable.
 
 To achieve this capability, we need to address the following problems:
-- Constraint 1: C++ is a statically-typed system, meaning that dynamic types cannot be determined or generated at runtime. Therefore, to generate type information at compile-time, we need to employ a mechanism that generates all the relevant information related to fields, such as "field name," "offset relative to its enclosing type," and "field type information."
+- Constraint 1: C++ is a statically-typed system, meaning that dynamic types cannot be determined or generated at runtime. Therefore, to generate type information at compile-time, we need to employ a mechanism that generates all the relevant information related to fields, such as "reflected_field name," "offset relative to its enclosing type," and "reflected_field type information."
 - Constraint 2: Although it is possible to retrieve type information using `typeid(T).name()` or `typeid(T).hashcode()`, this information cannot be used to reconstruct types.
 - Constraint 3: Considering the aforementioned requirements, we need a solution that allows us to store both the type information and all related information in a single container for easy querying or traversal.
   - It is worth noting that this aspect will be a crucial consideration in designing this functionality because certain features in C++, such as template specialization, inheritance, and `std::any`, allow for storage in a container but result in the loss of type information (as mentioned later in the text).
@@ -63,8 +63,8 @@ struct meta_field {
 };
 
 template<typename T>
-struct field : meta_field {
-    field(const std::string& name) : name(name) {}
+struct reflected_field : meta_field {
+    reflected_field(const std::string& name) : name(name) {}
     
     virtual const std::string get_name() override {
         return name;
@@ -82,8 +82,8 @@ private:
 
 TEST(refl_test, should_get_type_info_after_register) {
     std::vector<std::unique_ptr<meta_field>> fields;
-    fields.push_back(std::make_unique<field<int>>("int_field"));
-    fields.push_back(std::make_unique<field<double>>("double_field"));    
+    fields.push_back(std::make_unique<reflected_field<int>>("int_field"));
+    fields.push_back(std::make_unique<reflected_field<double>>("double_field"));    
     
     ASSERT_EQ(fields[0]->get_name(), "int_field");
     ASSERT_EQ(fields[0]->get_type_info(), "i");
@@ -95,7 +95,7 @@ TEST(refl_test, should_get_type_info_after_register) {
 
 However, this approach still has limitations. Although I can store the type `T` as the alias `type`, when using `std::vector<meta_field>`, I cannot directly use this alias and instead have to rely on the encapsulated virtual function `virtual std::string get_type_info()`.
 
-As a result, I can retrieve the type name of the field, such as `"i"` or `"d"` in the example above, but I cannot generate a variable of type `int` or `double` based solely on this information.
+As a result, I can retrieve the type name of the reflected_field, such as `"i"` or `"d"` in the example above, but I cannot generate a variable of type `int` or `double` based solely on this information.
 
 Similarly, I cannot define a template virtual function or a dynamic type alias in the base class `meta_field`.
 
@@ -104,8 +104,8 @@ Thus, this solution also fails to meet the requirements.
 ### 3.3 [Successful] Solution III: constexpr + Template Specialization/Partial Specialization + Template Recursion
 
 To address the aforementioned issues, one approach is as follows:
-1. Define a template class with a template type of `int` to tackle the problem of storing information in the same container. The elements within this container will be of type `field<int>()`, where `int` represents the index of a custom type.
-2. [Using Macros] When registering type information, construct a template specialization for `template<int index> struct field {};`. For example, in the current type system, we define the index of `int` as `0` and the index of `double` as `1`, and so on.
+1. Define a template class with a template type of `int` to tackle the problem of storing information in the same container. The elements within this container will be of type `reflected_field<int>()`, where `int` represents the index of a custom type.
+2. [Using Macros] When registering type information, construct a template specialization for `template<int index> struct reflected_field {};`. For example, in the current type system, we define the index of `int` as `0` and the index of `double` as `1`, and so on.
 
 However, this solution has drawbacks:
 1. It heavily relies on macros, making the code difficult to maintain.
@@ -120,7 +120,7 @@ Therefore, this solution is not an ideal one, and due to certain factors, it is 
 
 In this solution, several corresponding measures are taken to address the constraints mentioned earlier:
 1. For Constraint 1:
-    1. Use `constexpr` to generate type information at compile-time, such as field names and field type information. This allows the reflection library to "appear" as if it dynamically registers information, while in reality, all this information is already registered and calculated during compilation.
+    1. Use `constexpr` to generate type information at compile-time, such as reflected_field names and reflected_field type information. This allows the reflection library to "appear" as if it dynamically registers information, while in reality, all this information is already registered and calculated during compilation.
     2. To perform computations at compile-time, all calculation functions need to be defined as `consteval` and `constexpr`. Therefore, `std::array<std::pair<...>, ARRAY_SIZE>` is used as a table instead of `std::map` or `std::vector`.
 2. For Constraint 2:
     1. Use `type_placeholder` as the storage structure for type information, directly storing types instead of type information, enabling retrieval of types at runtime.
@@ -190,7 +190,7 @@ struct Foo {
 };
 
 // v2
-// type_placeholder is used to store field type information
+// type_placeholder is used to store reflected_field type information
 template<typename T>
 struct type_placeholder {
     using type = T;
@@ -202,10 +202,10 @@ consteval type_placeholder<T> create_tp() {
     return {};
 }
 
-// To simplify the code, field_types is used as an alias for all field types
+// To simplify the code, field_types is used as an alias for all reflected_field types
 using field_types = std::variant<type_placeholder<int>, type_placeholder<std::string>, type_placeholder<Foo>, type_placeholder<int*>>;
 
-// Get pointers to the field types here to avoid dereferencing issues. Additionally, consteval is used here, which allows for compile-time computation. In practical usage, variadic template expansion can be used to implement the ability of if constexpr.
+// Get pointers to the reflected_field types here to avoid dereferencing issues. Additionally, consteval is used here, which allows for compile-time computation. In practical usage, variadic template expansion can be used to implement the ability of if constexpr.
 template<std::size_t index>
 consteval auto get_type(const field_types& my_variant) {
     if constexpr (std::is_same_v<std::decay_t<decltype(std::get<index>(my_variant))>, type_placeholder<int>>) {
@@ -234,7 +234,7 @@ TEST(refl_test, should_get_type_info_after_register) {
         {std::string_view{"Pi"}, create_tp<int*>()},
     }};
     
-    // Type information holder check. Next, determine whether it is possible to retrieve the type information for each field from the array, and use std::is_same_v to verify its correctness.
+    // Type information holder check. Next, determine whether it is possible to retrieve the type information for each reflected_field from the array, and use std::is_same_v to verify its correctness.
     constexpr field_types i = x[0].second;
     ASSERT_TRUE((std::is_same_v<std::remove_pointer<decltype(get_type<i.index()>(i))>::type, int>));
 
@@ -277,7 +277,7 @@ struct Foo {
     int a;
 };
 
-refl(type(Foo), field(a)) refl_foo;
+refl(type(Foo), reflected_field(a)) refl_foo;
 
 TEST(refl_test, should_get_type_info_after_register) {
     refl_foo.get_type("a")::type x = 10;
@@ -326,8 +326,8 @@ struct meta_field {
 };
 
 template<typename T>
-struct field : meta_field {
-    field(const std::string& name) : name(name) {}
+struct reflected_field : meta_field {
+    reflected_field(const std::string& name) : name(name) {}
     
     virtual const std::string get_name() override {
         return name;
@@ -345,8 +345,8 @@ private:
 
 TEST(refl_test, should_get_type_info_after_register) {
     std::vector<std::unique_ptr<meta_field>> fields;
-    fields.push_back(std::make_unique<field<int>>("int_field"));
-    fields.push_back(std::make_unique<field<double>>("double_field"));    
+    fields.push_back(std::make_unique<reflected_field<int>>("int_field"));
+    fields.push_back(std::make_unique<reflected_field<double>>("double_field"));    
     
     ASSERT_EQ(fields[0]->get_name(), "int_field");
     ASSERT_EQ(fields[0]->get_type_info(), "i");
@@ -367,8 +367,8 @@ TEST(refl_test, should_get_type_info_after_register) {
 ### 3.3 [成功] 方案三：constexpr + 模板特化/偏特化 + 模板递归
 
 为了解决上述问题，一种解决思路是：
-1. 定义一个模板类型为 int 的模板类，用于解决如何在同一容器中存储信息的问题：因为其中的元素类型均为 `field<int>()` 其中 `int` 代表的是自定义类型的索引。
-2. [使用宏] 使用宏注册类型信息时，构造一个对于 `template<int index> struct field {};` 的模板特化，如当前类型系统中，我将 `int` 的索引定义为 `0`，`double` 的索引定义为 `1`，以此类推。
+1. 定义一个模板类型为 int 的模板类，用于解决如何在同一容器中存储信息的问题：因为其中的元素类型均为 `reflected_field<int>()` 其中 `int` 代表的是自定义类型的索引。
+2. [使用宏] 使用宏注册类型信息时，构造一个对于 `template<int index> struct reflected_field {};` 的模板特化，如当前类型系统中，我将 `int` 的索引定义为 `0`，`double` 的索引定义为 `1`，以此类推。
 
 但该方案由于：
 1. 大量使用宏，使得代码难以维护；

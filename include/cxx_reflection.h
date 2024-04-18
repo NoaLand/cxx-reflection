@@ -15,9 +15,9 @@ namespace refl {
     };
 
     template<typename FT>
-    class _field : public meta_field {
+    class reflected_field : public meta_field {
     public:
-        _field(std::string name, const size_t& offset) : name{std::move(name)}, offset{offset} {}
+        reflected_field(std::string name, const size_t& offset) : name{std::move(name)}, offset{offset} {}
         std::string get_name() override { return name; }
         size_t get_offset() override { return offset; }
     private:
@@ -33,7 +33,7 @@ namespace refl {
 
         template<typename... F>
         explicit type(F... field) {
-            // and need to calculate the offset of each field
+            // and need to calculate the offset of each reflected_field
             (fields.emplace_back(std::unique_ptr<meta_field>(field.template operator()<T>())), ...);
         }
 
@@ -53,6 +53,6 @@ namespace refl {
     };
 }
 
-#define refl_field(NAME) []<typename T>(){ return std::make_unique<refl::_field<decltype(T::NAME)>>(#NAME, offsetof(T, NAME)); }
+#define refl_field(NAME) []<typename T>(){ return std::make_unique<refl::reflected_field<decltype(T::NAME)>>(#NAME, offsetof(T, NAME)); }
 
 #endif //CPP_PROJECT_TEMPLATE_TEMPLATE_HEADER_H
