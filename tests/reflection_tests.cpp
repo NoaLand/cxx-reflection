@@ -16,14 +16,16 @@ public:
     std::string str;
 };
 
-refl::type<Foo> refl_foo{refl_field(i), refl_field(d)};
-refl::type<Bar> refl_bar{refl_field(foo), refl_field(str)};
+refl::type<Foo, decltype(Foo::i), decltype(Foo::d)> refl_foo{refl_field(i), refl_field(d)};
+refl::type<Bar, decltype(Bar::foo), decltype(Bar::str)> refl_bar{refl_field(foo), refl_field(str)};
 
 TEST(test_refl, should_successfully_store_field_info) {
+    ASSERT_TRUE((std::is_same_v<std::variant<int, double>, typename decltype(refl_foo)::field_types_variant>));
     ASSERT_EQ(refl_foo.fields.size(), 2);
     ASSERT_EQ(refl_foo.fields[0]->get_name(), "i");
     ASSERT_EQ(refl_foo.fields[1]->get_name(), "d");
 
+    ASSERT_TRUE((std::is_same_v<std::variant<Foo, std::string>, typename decltype(refl_bar)::field_types_variant>));
     ASSERT_EQ(refl_bar.fields.size(), 2);
     ASSERT_EQ(refl_bar.fields[0]->get_name(), "foo");
     ASSERT_EQ(refl_bar.fields[1]->get_name(), "str");

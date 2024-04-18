@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <variant>
 
 namespace refl {
     struct field_base {
@@ -25,9 +26,11 @@ namespace refl {
         using type = FT;
     };
 
-    template<typename T>
+    template<typename T, typename... FIELDS_TYPES>
     class type {
     public:
+        using field_types_variant = std::variant<FIELDS_TYPES...>;
+
         template<typename... F>
         explicit type(F... field) {
             // and need to calculate the offset of each field
