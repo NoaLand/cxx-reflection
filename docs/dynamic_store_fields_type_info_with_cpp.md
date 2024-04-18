@@ -56,14 +56,14 @@ To store different types in the same container, the use of inheritance seems to 
 #include <vector>
 #include <memory>
 
-struct field_base {
+struct meta_field {
     virtual const std::string get_name() = 0;
     virtual std::string get_type_info() = 0;
-    virtual ~field_base() = default;
+    virtual meta_field() = default;
 };
 
 template<typename T>
-struct field : field_base {
+struct field : meta_field {
     field(const std::string& name) : name(name) {}
     
     virtual const std::string get_name() override {
@@ -81,7 +81,7 @@ private:
 };
 
 TEST(refl_test, should_get_type_info_after_register) {
-    std::vector<std::unique_ptr<field_base>> fields;
+    std::vector<std::unique_ptr<meta_field>> fields;
     fields.push_back(std::make_unique<field<int>>("int_field"));
     fields.push_back(std::make_unique<field<double>>("double_field"));    
     
@@ -93,11 +93,11 @@ TEST(refl_test, should_get_type_info_after_register) {
 }
 ```
 
-However, this approach still has limitations. Although I can store the type `T` as the alias `type`, when using `std::vector<field_base>`, I cannot directly use this alias and instead have to rely on the encapsulated virtual function `virtual std::string get_type_info()`.
+However, this approach still has limitations. Although I can store the type `T` as the alias `type`, when using `std::vector<meta_field>`, I cannot directly use this alias and instead have to rely on the encapsulated virtual function `virtual std::string get_type_info()`.
 
 As a result, I can retrieve the type name of the field, such as `"i"` or `"d"` in the example above, but I cannot generate a variable of type `int` or `double` based solely on this information.
 
-Similarly, I cannot define a template virtual function or a dynamic type alias in the base class `field_base`.
+Similarly, I cannot define a template virtual function or a dynamic type alias in the base class `meta_field`.
 
 Thus, this solution also fails to meet the requirements.
 
@@ -319,14 +319,14 @@ TEST(refl_test, should_get_type_info_after_register) {
 #include <vector>
 #include <memory>
 
-struct field_base {
+struct meta_field {
     virtual const std::string get_name() = 0;
     virtual std::string get_type_info() = 0;
-    virtual ~field_base() = default;
+    virtual meta_field() = default;
 };
 
 template<typename T>
-struct field : field_base {
+struct field : meta_field {
     field(const std::string& name) : name(name) {}
     
     virtual const std::string get_name() override {
@@ -344,7 +344,7 @@ private:
 };
 
 TEST(refl_test, should_get_type_info_after_register) {
-    std::vector<std::unique_ptr<field_base>> fields;
+    std::vector<std::unique_ptr<meta_field>> fields;
     fields.push_back(std::make_unique<field<int>>("int_field"));
     fields.push_back(std::make_unique<field<double>>("double_field"));    
     
@@ -356,11 +356,11 @@ TEST(refl_test, should_get_type_info_after_register) {
 }
 ```
 
-但这样做仍然存在问题，即，我能够存储类型 `T` 为别名 `type` 但在使用 `std::vector<field_base>` 时，却不能直接用该别名，只能使用封装的虚函数 `virtual std::string get_type_info()`。
+但这样做仍然存在问题，即，我能够存储类型 `T` 为别名 `type` 但在使用 `std::vector<meta_field>` 时，却不能直接用该别名，只能使用封装的虚函数 `virtual std::string get_type_info()`。
 
 这样一来，我能够知道该字段的类型名字，如上例中的 `"i"`、`"d"`，但不能根据这个信息生成一个为 `int` 或 `double` 的变量。
 
-同样的，我也无法在基类 `field_base` 中定义一个模板虚函数，或是一个动态的类型别名。
+同样的，我也无法在基类 `meta_field` 中定义一个模板虚函数，或是一个动态的类型别名。
 
 到此，该同样方案失败。
 

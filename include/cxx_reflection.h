@@ -8,14 +8,14 @@
 #include <variant>
 
 namespace refl {
-    struct field_base {
+    struct meta_field {
         virtual std::string get_name() = 0;
         virtual size_t get_offset() = 0;
-        virtual ~field_base() = default;
+        virtual ~meta_field() = default;
     };
 
     template<typename FT>
-    class _field : public field_base {
+    class _field : public meta_field {
     public:
         _field(std::string name, const size_t& offset) : name{std::move(name)}, offset{offset} {}
         std::string get_name() override { return name; }
@@ -34,7 +34,7 @@ namespace refl {
         template<typename... F>
         explicit type(F... field) {
             // and need to calculate the offset of each field
-            (fields.emplace_back(std::unique_ptr<field_base>(field.template operator()<T>())), ...);
+            (fields.emplace_back(std::unique_ptr<meta_field>(field.template operator()<T>())), ...);
         }
 
         // TODO: should be changed later according
@@ -49,7 +49,7 @@ namespace refl {
         }
 
     // private:
-        std::vector<std::unique_ptr<field_base>> fields;
+        std::vector<std::unique_ptr<meta_field>> fields;
     };
 }
 
