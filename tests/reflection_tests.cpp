@@ -24,7 +24,7 @@ TEST(refl_type_system_test, should_succesfully_create_variant_types_for_class_af
     ASSERT_TRUE((std::is_same_v<std::variant<Foo, std::string>, typename decltype(refl_bar)::field_types_variant>));
 }
 
-TEST(test_refl, should_successfully_store_field_info) {
+TEST(refl_type_system_test, should_successfully_store_field_info_after_using_refl_type) {
     ASSERT_EQ(refl_foo.fields.size(), 2);
     ASSERT_EQ(refl_foo.fields[0]->get_name(), "i");
     ASSERT_EQ(refl_foo.fields[1]->get_name(), "d");
@@ -33,7 +33,9 @@ TEST(test_refl, should_successfully_store_field_info) {
     ASSERT_EQ(refl_bar.fields[0]->get_name(), "foo");
     ASSERT_EQ(refl_bar.fields[1]->get_name(), "str");
 
-    // should successfully set foo and bar instance value
+}
+
+TEST(refl_type_system_test, should_successfully_set_field_value_when_passing_instance_and_field_name_and_value) {
     Foo f{};
     refl_foo.set_field_value(f, "i", 10);
     refl_foo.set_field_value(f, "d", 3.14);
