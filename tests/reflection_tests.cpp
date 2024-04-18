@@ -32,7 +32,6 @@ TEST(refl_type_system_test, should_successfully_store_field_info_after_using_ref
     ASSERT_EQ(refl_bar.fields.size(), 2);
     ASSERT_EQ(refl_bar.fields[0]->get_name(), "foo");
     ASSERT_EQ(refl_bar.fields[1]->get_name(), "str");
-
 }
 
 TEST(refl_type_system_test, should_successfully_set_field_value_when_passing_instance_and_field_name_and_value) {
