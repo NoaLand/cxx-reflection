@@ -519,8 +519,32 @@ TEST(refl_test, should_get_type_info_after_register) {
     ASSERT_TRUE((std::is_same_v<std::remove_pointer<decltype(get_type<Pi.index()>(Pi))>::type, int*>));
 }
 ```
-
 这样一来，就成功使用 `std::variant` 和 `type_placeholder<T>` 保存了事实类型信息，并可以根据 `index` 获取到类型信息。接下来只需要将 `std::variant` 集成反射库中的 `refl::type` 的可变参数模板类即可。
+
+因此，在精简之后，仅需要下面几行就能够实现在 C++ 静态类型系统中实现动态类型信息存储的能力：
+
+```cpp
+// type_placeholder 用于保存字段类型信息
+template<typename T>
+struct type_placeholder {
+    using type = T;
+};
+
+// 用于创建 type_placeholder 实例
+template<typename T>
+consteval type_placeholder<T> create_tp() {
+    return {};
+}
+
+// 为了简化代码在此设置全部字段类型的别名 field_types，可通过可变参数模板类定义
+using field_types = std::variant<type_placeholder<int>, type_placeholder<std::string>, type_placeholder<Foo>, type_placeholder<int*>>;
+
+// 在此获取字段类型的指针，避免解引用的问题，另外，这里使用了 consteval，因此可以在编译时计算，在实际使用中，可以使用可变参数展开实现 `if constexpr` 的能力
+template<std::size_t index>
+consteval auto get_type(const field_types& my_variant) {
+    return static_cast<typename std::decay_t<decltype(std::get<index>(my_variant))>::type*>(nullptr);
+}
+```
 
 ## 4. 总结
 
