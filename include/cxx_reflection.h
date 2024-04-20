@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 #include <variant>
+#include <array>
+#include <iostream>
 
 namespace refl {
     struct meta_field {
@@ -25,15 +27,34 @@ namespace refl {
         size_t offset;
     };
 
+    template<typename T>
+    struct type_identity {
+        using type = T;
+    };
+
+    template<typename T>
+    consteval type_identity<T> create_type_identity() {
+        return {};
+    }
+
+    template<typename T>
+    consteval T extract_field_type(std::unique_ptr<refl::reflected_field<T>>);
+
     template<typename T, typename... FIELDS_TYPES>
     class type {
     public:
-        using field_types_variant = std::variant<FIELDS_TYPES...>;
+        // TODO: handle duplicated types later, since std::variant cannot hold duplicated types
+        using field_types_variant = std::variant<type_identity<FIELDS_TYPES>...>;
 
         template<typename... F>
         explicit type(F... field) {
             // and need to calculate the offset of each reflected_field
             (fields.emplace_back(std::unique_ptr<meta_field>(field.template operator()<T>())), ...);
+        }
+
+        template<std::size_t INDEX>
+        consteval auto get_field_type(const field_types_variant& some_field) {
+            return static_cast<typename std::decay_t<decltype(std::get<INDEX>(some_field))>::type*>(nullptr);
         }
 
         // TODO: should be changed later according
@@ -49,6 +70,7 @@ namespace refl {
 
     // private:
         std::vector<std::unique_ptr<meta_field>> fields;
+        static constexpr std::array<std::pair<std::string_view, field_types_variant>, sizeof...(FIELDS_TYPES)> fields_x;
     };
 }
 

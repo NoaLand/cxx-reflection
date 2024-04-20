@@ -20,8 +20,8 @@ refl::type<Foo, decltype(Foo::i), decltype(Foo::d)> refl_foo{refl_field(i), refl
 refl::type<Bar, decltype(Bar::foo), decltype(Bar::str)> refl_bar{refl_field(foo), refl_field(str)};
 
 TEST(refl_type_system_test, should_succesfully_create_variant_types_for_class_after_using_refl_type) {
-    ASSERT_TRUE((std::is_same_v<std::variant<int, double>, typename decltype(refl_foo)::field_types_variant>));
-    ASSERT_TRUE((std::is_same_v<std::variant<Foo, std::string>, typename decltype(refl_bar)::field_types_variant>));
+    ASSERT_TRUE((std::is_same_v<std::variant<refl::type_identity<int>, refl::type_identity<double>>, typename decltype(refl_foo)::field_types_variant>));
+    ASSERT_TRUE((std::is_same_v<std::variant<refl::type_identity<Foo>, refl::type_identity<std::string>>, typename decltype(refl_bar)::field_types_variant>));
 }
 
 TEST(refl_type_system_test, should_successfully_store_field_info_after_using_refl_type) {
