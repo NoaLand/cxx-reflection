@@ -6,11 +6,17 @@
 namespace noaland {
     struct i_dont_care {};
 
+    template<typename T>
+    struct is_i_dont_care : std::false_type {};
+
+    template<>
+    struct is_i_dont_care<i_dont_care> : std::true_type {};
+
     // if two type are not the same
     template<typename X, typename Y>
     struct is_a{
         consteval auto operator()() {
-            if constexpr (std::is_same_v<X, i_dont_care> || std::is_same_v<Y, i_dont_care>) {
+            if constexpr (noaland::is_i_dont_care<X>::value || noaland::is_i_dont_care<Y>::value) {
                 return std::true_type{};
             } else {
                 return std::false_type{};
