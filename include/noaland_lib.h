@@ -14,7 +14,7 @@ namespace noaland {
 
     // if two type are not the same
     template<typename X, typename Y>
-    struct is_a {
+    struct is_fuzzy_type_matched {
         consteval auto operator()() {
             if constexpr (noaland::is_i_dont_care<X>::value || noaland::is_i_dont_care<Y>::value || std::is_same_v<X, Y>) {
                 return std::true_type{};
@@ -25,7 +25,7 @@ namespace noaland {
     };
 
     template<typename X, typename Y>
-    inline constexpr auto is_a_v = decltype(is_a<X, Y>()())::value;
+    inline constexpr auto is_fuzzy_type_matched_v = decltype(is_fuzzy_type_matched<X, Y>()())::value;
 
     template<bool... R>
     consteval bool conjunction() {
@@ -33,9 +33,9 @@ namespace noaland {
     }
 
     template<template<typename...> typename X, template<typename...> typename Y, typename... SUB_X, typename... SUB_Y>
-    struct is_a<X<SUB_X...>, Y<SUB_Y...>> {
+    struct is_fuzzy_type_matched<X<SUB_X...>, Y<SUB_Y...>> {
         consteval auto operator()() {
-            if constexpr (!conjunction<is_a_v<SUB_X, SUB_Y>...>()) {
+            if constexpr (!conjunction<is_fuzzy_type_matched_v<SUB_X, SUB_Y>...>()) {
                 return std::false_type{};
             } else {
                 return std::true_type{};
