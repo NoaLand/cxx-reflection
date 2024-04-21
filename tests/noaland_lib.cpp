@@ -25,3 +25,9 @@ TEST(is_a_test, should_successfully_detect_one_type_with_i_dont_care) {
     ASSERT_TRUE((noaland::is_a_v<Foo, noaland::i_dont_care>));
     ASSERT_TRUE((noaland::is_a_v<noaland::i_dont_care, Foo>));
 }
+
+TEST(is_a_test, should_successfully_detect_vector_with_i_dont_care_is_a_vector) {
+    ASSERT_TRUE((noaland::is_a_v<std::vector<int>, std::vector<noaland::i_dont_care>>));
+    ASSERT_TRUE((noaland::is_a_v<std::vector<Foo>, std::vector<noaland::i_dont_care>>));
+    ASSERT_TRUE((noaland::is_a_v<std::vector<Foo*>, std::vector<noaland::i_dont_care>>));
+}
