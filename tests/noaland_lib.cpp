@@ -50,5 +50,5 @@ TEST(is_a_test, should_successfully_detect_template_of_variadic_param_with_i_don
 
 TEST(is_a_test, should_get_false_when_two_types_are_different) {
     static_assert(!noaland::is_fuzzy_type_matched_v<some_variadic_template<int, float, some_variadic_template<double>>, some_variadic_template<noaland::i_dont_care, double, some_variadic_template<double>>>);
-    static_assert(noaland::is_fuzzy_type_matched_v<std::vector<std::vector<std::vector<int>>>, std::vector<noaland::i_dont_care>>);
+    static_assert(noaland::is_fuzzy_type_matched_v<std::vector<std::vector<std::vector<noaland::i_dont_care>>>, std::vector<noaland::i_dont_care>>);
 }
