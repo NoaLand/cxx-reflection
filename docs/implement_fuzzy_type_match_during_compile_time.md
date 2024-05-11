@@ -1,5 +1,177 @@
 # [EN] Implement Fuzzy Type Match During Compile Time
 
+## 1. Introduction
+
+While implementing a C++ reflection library, I encountered a new problem: how to determine if the template T being passed is a type_placeholder, based on the previous article [dynamic store fields type info with cpp](./dynamic_store_fields_type_info_with_cpp.md)?
+
+Solving this problem allows me to declare concepts more easily within the reflection library, ensuring robustness of the code.
+
+This article will discuss how I achieved this functionality at compile-time using C++ template metaprogramming techniques.
+
+## 2. Problem Analysis
+
+The problem at hand is actually quite straightforward: how to determine if the two input parameters, X and Y, achieve a fuzzy matching condition, such as:
+
+```cpp
+// Is it a std::vector of something?
+is_fuzzy_type_matched_v<std::vector<std::vector<int>>, std::vector<SOMETHING_I_DONT_CARE>>;
+
+// Is it something?
+is_fuzzy_type_matched_v<std::vector<int>, SOMETHING_I_DONT_CARE>;
+
+// Is a variadic template containing SOMETHING_I_DONT_CARE?
+is_fuzzy_type_matched_v<std::tuple<int, double, std::string>, std::tuple<int, SOMETHING_I_DONT_CARE, std::string>>;
+
+// And so on...
+```
+
+We can observe that this problem essentially involves two variables:
+1. Depth: The template being asserted may have multiple nested layers of templates.
+2. Breadth: The template being asserted may be a variadic template.
+
+## 3. Solution
+
+### 3.1 Starting from Scratch
+
+Actually, we can start with simplicity and design a few basic test cases using the Test-Driven Development (TDD) approach:
+- When X is A and Y is A, it should return true - in this case, we can simply wrap it with std::is_same_v.
+- When X is A and Y is B, it should return false - no code modifications are required, we can directly use the logic of std::is_same_v.
+- When X is A and Y is i_dont_care, it should return true - in this case, additional assertions need to be added to the existing wrapper.
+
+Considering that C++ already provides type traits functions, we can easily relate this capability to the standard library function `std::is_same_v`.
+
+Therefore, we can further refine our desired implementation: how to extend the standard library function `std::is_same_v` to not only match exact types but also perform fuzzy type matching?
+
+At this point, we have a basic code framework as follows:
+
+```cpp
+// Define an i_dont_care class as the fuzzy matching indicator
+struct i_dont_care {};
+
+// Define a template class to determine if a type T is i_dont_care, defaulting to std::false_type
+template<typename T>
+struct is_i_dont_care : std::false_type {};
+
+// Specialize the template class to return std::true_type when T is i_dont_care
+template<>
+struct is_i_dont_care<i_dont_care> : std::true_type {};
+
+// Define a template class to determine if there is a fuzzy type match when two input types are different
+template<typename X, typename Y>
+struct is_fuzzy_type_matched {
+    consteval auto operator()() {
+        if constexpr (is_i_dont_care<X>::value || is_i_dont_care<Y>::value || std::is_same_v<X, Y>) {
+            return std::true_type{};
+        } else {
+            return std::false_type{};
+        }
+    }
+};
+
+// Due to the use of template constexpr expressions, for convenience, define an inline constexpr expression to simplify the invocation
+template<typename X, typename Y>
+inline constexpr auto is_fuzzy_type_matched_v = decltype(is_fuzzy_type_matched<X, Y>()())::value;
+```
+
+### 3.2 Template Recursion and Meta-Metaprogramming
+
+In fact, once we have implemented the simplest assertion, we need to consider the two problems mentioned earlier, i.e., "depth" and "breadth". Since both are variable, what we need to do is use a recursive approach to expand these two dimensions into the initial simple case.
+
+1. For the **depth problem**, the solution is meta-metaprogramming, i.e., `template of template`, which means defining templates nested within templates in a template. Specialize the `is_fuzzy_type_matched_v` function to accept any number of single parameter nested templates.
+2. For the **breadth problem**, the solution is a variadic template. Since the breadth problem itself involves a variadic template, the solution is to define a variadic template to address this issue.
+
+Based on these two solutions, we can get the following combined code framework:
+
+```cpp
+template<template<typename...> typename X, template<typename...> typename Y, typename... SUB_X, typename... SUB_Y>
+struct is_fuzzy_type_matched<X<SUB_X...>, Y<SUB_Y...>> {
+    consteval auto operator()() {}
+};
+```
+
+Next, we need to recursively expand `SUB_X` and `SUB_Y`, and since we have already defined specializations for when two types are the same or different, we just need to let the template function automatically recurse.
+
+```cpp
+// Recursively and combine the return values of each is_fuzzy_type_matched_v
+template<bool... R>
+consteval bool conjunction() {
+    return (R && ...);
+}
+
+// Specialize the case of combining breadth and depth
+template<template<typename...> typename X, template<typename...> typename Y, typename... SUB_X, typename... SUB_Y>
+struct is_fuzzy_type_matched<X<SUB_X...>, Y<SUB_Y...>> {
+    consteval auto operator()() {
+        if constexpr (!conjunction<is_fuzzy_type_matched_v<SUB_X, SUB_Y>...>()) {
+            return std::false_type{};
+        } else {
+            return std::true_type{};
+        }
+    }
+};
+```
+
+### 3.3 Complete Code
+
+Finally, the complete code is as follows:
+
+```cpp
+namespace noaland {
+    struct i_dont_care {};
+
+    template<typename T>
+    struct is_i_dont_care : std::false_type {};
+
+    template<>
+    struct is_i_dont_care<i_dont_care> : std::true_type {};
+
+    // if two type are not the same
+    template<typename X, typename Y>
+    struct is_fuzzy_type_matched {
+        consteval auto operator()() {
+            if constexpr (noaland::is_i_dont_care<X>::value || noaland::is_i_dont_care<Y>::value || std::is_same_v<X, Y>) {
+                return std::true_type{};
+            } else {
+                return std::false_type{};
+            }
+        }
+    };
+
+    template<typename X, typename Y>
+    inline constexpr auto is_fuzzy_type_matched_v = decltype(is_fuzzy_type_matched<X, Y>()())::value;
+
+    template<bool... R>
+    consteval bool conjunction() {
+        return (R && ...);
+    }
+
+    template<template<typename...> typename X, template<typename...> typename Y, typename... SUB_X, typename... SUB_Y>
+    struct is_fuzzy_type_matched<X<SUB_X...>, Y<SUB_Y...>> {
+        consteval auto operator()() {
+            if constexpr (!conjunction<is_fuzzy_type_matched_v<SUB_X, SUB_Y>...>()) {
+                return std::false_type{};
+            } else {
+                return std::true_type{};
+            }
+        }
+    };
+}
+```
+
+You can find this function directly in `noaland_lib.h` and use `noaland::is_fuzzy_type_matched_v<X, Y>` to call it directly.
+
+Since all the functions this function depends on are `consteval`, you can call this function directly at compile time without needing to call it at runtime. In other words, this function can be directly asserted using `static_assert` without consuming any runtime resources.
+
+## 4. Conclusion
+
+Although this article seems to solve a simple problem, it actually involves a lot of C++ template metaprogramming practices, such as template recursion, meta-metaprogramming, variadic templates, template specialization, `consteval`, etc.
+
+These techniques are full of surprises, but also full of scares. While writing the reflection library, I kept jumping back and forth between "Great, this path is clear" and "Oh no, this path is blocked".
+
+If you are interested in the content presented in this article, please take a look at my **work-in-progress** [cxx-reflection](https://github.com/NoaLand/cxx-reflection) repository on GitHub. Your stars and forks are welcome.
+
+---
+
 # [CN] 实现基于编译时的模糊类型匹配
 
 ## 1. 介绍
@@ -91,7 +263,7 @@ struct is_fuzzy_type_matched<X<SUB_X...>, Y<SUB_Y...>> {
 };
 ```
 
-接下来要做的就是对 SUB_X 和 SUB_Y 的逐级展开，鉴于之前已经定义了两个类型相同或不同的特化，接下来只需要让模板函数自动递归即可。
+接下来要做的就是对 `SUB_X` 和 `SUB_Y` 的逐级展开，鉴于之前已经定义了两个类型相同或不同的特化，接下来只需要让模板函数自动递归即可。
 
 ```cpp
 // 递归并合并每个 is_fuzzy_type_matched_v 的返回值
