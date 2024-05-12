@@ -12,7 +12,7 @@ add_executable(
         cxx_reflection_tests
         test_main.cpp
         reflection_tests.cpp
-        noaland_lib.cpp
+        noaland_lib_tests.cpp
 )
 
 target_link_libraries(
