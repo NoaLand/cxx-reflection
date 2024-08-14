@@ -6,9 +6,11 @@ on:
   pull_request:
     branches: [ "master" ]
 
+env:
+  BUILD_TYPE: Release
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
