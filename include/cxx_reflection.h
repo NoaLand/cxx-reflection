@@ -70,7 +70,7 @@ namespace refl {
 
     // private:
         std::vector<std::unique_ptr<meta_field>> fields;
-        static constexpr std::array<std::pair<std::string_view, field_types_variant>, sizeof...(FIELDS_TYPES)> fields_x;
+        // static constexpr std::array<std::pair<std::string_view, field_types_variant>, sizeof...(FIELDS_TYPES)> fields_x;
     };
 }
 
