@@ -77,8 +77,8 @@ namespace noaland {
                         return unexpected<E>(std::move(err));
                     }
                 },
-                [err](auto&&) -> expected {
-                    return unexpected<E>(std::move(err));
+                [](auto&& err) -> expected {
+                    return unexpected<E>(std::move(err.what()));
                 }
             }, inner_);
         }

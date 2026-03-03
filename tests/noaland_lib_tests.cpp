@@ -80,3 +80,13 @@ TEST(expected_test, should_get_default_value_when_using_expected) {
 
     ASSERT_EQ(v, -1);
 }
+
+TEST(expected_test, should_get_default_value_when_original_output_is_with_error) {
+    auto v = get_value(-10)
+        .and_should([](int val){ return val % 2 == 1; }, std::string("validation failed!"))
+        .and_then([](int val){ return val + 1; })
+        .or_else([](auto ex){ std::cout << "Exception: " << ex.what() << '\n'; })
+        .value_or(-1);
+
+    ASSERT_EQ(v, -1);
+}
