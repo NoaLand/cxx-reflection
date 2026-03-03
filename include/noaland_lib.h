@@ -65,64 +65,60 @@ namespace noaland {
     template<typename V, typename E>
     class expected {
     public:
-        expected(V val) { std::construct_at(&val_, std::move(val)); t_ = expected_type::VALUE; }
-        expected(unexpected<E> err) { std::construct_at(&err_, std::move(err)); t_ = expected_type::ERROR; }
-        ~expected() {
-            if (t_ == expected_type::VALUE) {
-                val_.~V();
-            } else {
-                err_.~unexpected<E>();
-            }
-            t_ = expected_type::ERROR;
-        }
+        expected(V val) : inner_{std::move(val)} {}
+        expected(unexpected<E> err) : inner_{std::move(err)} {}
 
         expected and_should(auto validation_func, E err) {
-            switch (t_) {
-                case expected_type::VALUE:
-                    if (validation_func(val_)) {
-                        return { val_ };
+            return std::visit(overloads {
+                [validation_func, err](V& val) -> expected {
+                    if (validation_func(val)) {
+                        return std::move(val);
                     } else {
                         return unexpected<E>(std::move(err));
                     }
-                case expected_type::ERROR:
-                default:
+                },
+                [err](auto&&) -> expected {
                     return unexpected<E>(std::move(err));
-            }
+                }
+            }, inner_);
         }
 
         expected and_then(auto operation_func) {
-            switch (t_) {
-                case expected_type::VALUE:
-                    return operation_func(std::move(val_));
-                case expected_type::ERROR:
-                default:
-                    return unexpected<E>(std::move(err_.what()));
-            }
+            return std::visit(overloads {
+                [operation_func](V& val) -> expected {
+                    return operation_func(std::move(val));
+                },
+                [](auto&& err) -> expected {
+                    return unexpected<E>(std::move(err.what()));
+                }
+            }, inner_);
         }
 
-        expected or_else(V default_val, auto throw_func) {
-            switch (t_) {
-                case expected_type::VALUE:
-                    return val_;
-                case expected_type::ERROR:
-                default:
-                    throw_func(err_);
-                    return default_val;
-            }
+        expected or_else(auto throw_func) {
+            return std::visit(overloads {
+                [](V& val) -> expected {
+                    return std::move(val);
+                },
+                [throw_func](auto&& err) -> expected {
+                    throw_func(err);
+                    return unexpected<E>(std::move(err.what()));
+                }
+            }, inner_);
         }
 
-        auto value() {
-            return val_;
+        V value_or(V&& default_val) {
+            return std::visit(overloads {
+                [](V& val) -> V {
+                    return std::move(val);
+                },
+                [&default_val](auto&&) -> V {
+                    return std::move(default_val);
+                }
+            }, inner_);
         }
 
     private:
-        enum class expected_type { VALUE = 0, ERROR };
-        union {
-            V val_;
-            unexpected<E> err_;
-        };
-        expected_type t_{ expected_type::ERROR };
-
+        std::variant<V, unexpected<E>> inner_;
     };
 }
 
