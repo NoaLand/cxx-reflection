@@ -2,6 +2,7 @@
 #define __CXX_REFLECTION_NOALAND_LIB_H__
 
 #include <type_traits>
+#include <concepts>
 
 namespace noaland {
     struct i_dont_care {};
@@ -68,7 +69,9 @@ namespace noaland {
         expected(V val) : inner_{std::move(val)} {}
         expected(unexpected<E> err) : inner_{std::move(err)} {}
 
-        expected and_should(auto validation_func, E err) {
+        expected and_should(auto validation_func, E err) requires requires(decltype(validation_func) func, V v) {
+            { func(v) } -> std::same_as<bool>;
+        } {
             return std::visit(overloads {
                 [validation_func, err](V& val) -> expected {
                     if (validation_func(val)) {
@@ -83,7 +86,7 @@ namespace noaland {
             }, inner_);
         }
 
-        expected and_then(auto operation_func) {
+        expected and_then(auto operation_func) requires std::invocable<decltype(operation_func), V> {
             return std::visit(overloads {
                 [operation_func](V& val) -> expected {
                     return operation_func(std::move(val));
@@ -94,7 +97,7 @@ namespace noaland {
             }, inner_);
         }
 
-        expected or_else(auto throw_func) {
+        expected or_else(auto throw_func) requires std::invocable<decltype(throw_func), unexpected<E>> {
             return std::visit(overloads {
                 [](V& val) -> expected {
                     return std::move(val);
