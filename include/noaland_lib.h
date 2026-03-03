@@ -42,6 +42,88 @@ namespace noaland {
             }
         }
     };
+
+    // expected
+    template<typename T>
+    concept printable = requires(T t) {
+        { std::cout << t } -> std::same_as<std::ostream&>;
+    };
+
+    template<printable E>
+    class unexpected {
+    public:
+        explicit unexpected(E ex) : err{std::move(ex)} {}
+        E what() const { return err; }
+
+    private:
+        E err;
+    };
+
+    template<class... Ts> struct overloads : Ts... { using Ts::operator()...; };
+    template<class... Ts> overloads(Ts...) -> overloads<Ts...>;
+
+    template<typename V, typename E>
+    class expected {
+    public:
+        expected(V val) { std::construct_at(&val_, std::move(val)); t_ = expected_type::VALUE; }
+        expected(unexpected<E> err) { std::construct_at(&err_, std::move(err)); t_ = expected_type::ERROR; }
+        ~expected() {
+            if (t_ == expected_type::VALUE) {
+                val_.~V();
+            } else {
+                err_.~unexpected<E>();
+            }
+            t_ = expected_type::ERROR;
+        }
+
+        expected and_should(auto validation_func, E err) {
+            switch (t_) {
+                case expected_type::VALUE:
+                    if (validation_func(val_)) {
+                        return { val_ };
+                    } else {
+                        return unexpected<E>(std::move(err));
+                    }
+                case expected_type::ERROR:
+                default:
+                    return unexpected<E>(std::move(err));
+            }
+        }
+
+        expected and_then(auto operation_func) {
+            switch (t_) {
+                case expected_type::VALUE:
+                    return operation_func(std::move(val_));
+                case expected_type::ERROR:
+                default:
+                    return unexpected<E>(std::move(err_.what()));
+            }
+        }
+
+        expected or_else(V default_val, auto throw_func) {
+            switch (t_) {
+                case expected_type::VALUE:
+                    return val_;
+                case expected_type::ERROR:
+                default:
+                    throw_func(err_);
+                    return default_val;
+            }
+        }
+
+        auto value() {
+            return val_;
+        }
+
+    private:
+        enum class expected_type { VALUE = 0, ERROR };
+        union {
+            V val_;
+            unexpected<E> err_;
+        };
+        expected_type t_{ expected_type::ERROR };
+
+    };
 }
 
 #endif // __CXX_REFLECTION_NOALAND_LIB_H__
