@@ -1,5 +1,4 @@
-#ifndef __CXX_REFLECTION_NOALAND_LIB_H__
-#define __CXX_REFLECTION_NOALAND_LIB_H__
+#pragma once
 
 #include <concepts>
 #include <iostream>
@@ -116,5 +115,3 @@ namespace noaland {
         std::variant<V, unexpected<E>> inner_;
     };
 } // namespace noaland
-
-#endif // __CXX_REFLECTION_NOALAND_LIB_H__
