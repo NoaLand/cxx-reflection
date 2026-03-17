@@ -3,6 +3,8 @@
 
 #include <type_traits>
 #include <concepts>
+#include <iostream>
+#include <variant>
 
 namespace noaland {
     struct i_dont_care {};
